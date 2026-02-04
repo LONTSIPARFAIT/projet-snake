@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu Snake - Le Serpent Classique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f1f1f1;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+            width: 100%;
+            gap: 15px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 5px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            color: #4CAF50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            letter-spacing: 1px;
+        }
+        
+        .sous-titre {
+            font-size: 0.9rem;
+            color: #a0a0c0;
+            margin-bottom: 10px;
+            padding: 0 10px;
+        }
+        
+        .niveau-container {
+            background-color: rgba(13, 25, 48, 0.9);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #2a3b5c;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .niveau-container h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 1px solid #2a3b5c;
+            padding-bottom: 5px;
+        }
+        
+        .niveaux {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .btn-niveau {
+            padding: 10px 5px;
+            background-color: #2a3b5c;
+            color: #f1f1f1;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .btn-niveau:hover {
+            background-color: #3a4b6c;
+        }
+        
+        .btn-niveau.actif {
+            background-color: #4CAF50;
+            color: #0d1930;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+        
+        .vitesse-affichee {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #a0a0c0;
+            padding: 8px;
+            background-color: rgba(42, 59, 92, 0.5);
+            border-radius: 6px;
+        }
+        
+        #vitesseText {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        canvas {
+            border: 2px solid #4CAF50;
+            border-radius: 6px;
+            background-color: #0d1930;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            aspect-ratio: 1/1;
+        }
+        
+        .info-jeu {
+            background-color: rgba(13, 25, 48, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #2a3b5c;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .score-container {
+            background-color: #4CAF50;
+            color: #0d1930;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-titre {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .score-valeur {
+            font-size: 2.2rem;
+            font-weight: bold;
+        }
+        
+        .meilleur-score {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #0d1930;
+        }
+        
+        .controles {
+            margin-bottom: 15px;
+        }
+        
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            border-bottom: 1px solid #2a3b5c;
+            padding-bottom: 5px;
+        }
+        
+        .controles ul {
+            list-style-type: none;
+            padding-left: 8px;
+        }
+        
+        .controles li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .touche {
+            display: inline-block;
+            background-color: #2a3b5c;
+            color: #f1f1f1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-weight: bold;
+            min-width: 35px;
+            text-align: center;
+            border: 1px solid #3a4b6c;
+            font-size: 0.85rem;
+        }
+        
+        .instructions {
+            background-color: rgba(42, 59, 92, 0.6);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .instructions p {
+            margin-bottom: 8px;
+            line-height: 1.4;
+            font-size: 0.85rem;
+        }
+        
+        .boutons-jeu {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: #0d1930;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        #btnRedemarrer {
+            background-color: #ff9800;
+        }
+        
+        #btnRedemarrer:hover {
+            background-color: #e68900;
+        }
+        
+        #btnPause {
+            background-color: #2196F3;
+        }
+        
+        #btnPause:hover {
+            background-color: #0b7dda;
+        }
+        
+        /* Contrôles mobiles à côté du jeu */
+        .mobile-game-area {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 10px;
+        }
+        
+        .controles-mobile-haut {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .controles-mobile-centre {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .btn-mobile {
+            background-color: #2a3b5c;
+            color: #f1f1f1;
+            border: none;
+            border-radius: 8px;
+            height: 60px;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-mobile:active {
+            background-color: #4CAF50;
+            transform: scale(0.95);
+        }
+        
+        #btnHaut {
+            grid-column: 2;
+        }
+        
+        #btnGauche {
+            grid-column: 1;
+        }
+        
+        #btnDroite {
+            grid-column: 3;
+        }
+        
+        #btnBas {
+            grid-column: 2;
+        }
+        
+        .ecran-fin {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            z-index: 10;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .ecran-fin h2 {
+            color: #ff4444;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+        
+        .ecran-fin p {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .score-final {
+            font-size: 2rem;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        footer {
+            margin-top: 15px;
+            text-align: center;
+            color: #a0a0c0;
+            font-size: 0.8rem;
+            width: 100%;
+            padding-top: 10px;
+            border-top: 1px solid #2a3b5c;
+            padding: 0 10px;
+        }
+        
+        /* Mode bureau */
+        @media (min-width: 769px) {
+            .container {
+                max-width: 900px;
+            }
+            
+            h1 {
+                font-size: 2.8rem;
+            }
+            
+            .sous-titre {
+                font-size: 1.1rem;
+            }
+            
+            .niveaux {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .btn-niveau {
+                padding: 12px 5px;
+                font-size: 0.9rem;
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .niveau-container {
+                max-width: 600px;
+                padding: 15px;
+            }
+            
+            .game-area {
+                gap: 25px;
+            }
+            
+            .mobile-game-area {
+                display: none !important;
+            }
+        }
+        
+        /* Mode tablette */
+        @media (max-width: 768px) and (min-width: 481px) {
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mobile-game-area {
+                display: block;
+            }
+            
+            .info-jeu {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .niveaux {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .btn-niveau {
+                flex: 1;
+                min-width: 0;
+            }
+        }
+        
+        /* Mode mobile */
+        @media (max-width: 480px) {
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mobile-game-area {
+                display: block;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .info-jeu {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .niveaux {
+                flex-direction: column;
+            }
+            
+            .btn-niveau {
+                width: 100%;
+            }
+            
+            canvas {
+                max-width: 100%;
+            }
+            
+            .btn-mobile {
+                height: 55px;
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Très petit mobile */
+        @media (max-width: 350px) {
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .btn-mobile {
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .score-valeur {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JEU SNAKE</h1>
+            <p class="sous-titre">Le jeu classique du serpent - Mange la nourriture, grandis et évite les collisions !</p>
+        </header>
+        
+        <div class="niveau-container">
+            <h2>CHOIX DU NIVEAU</h2>
+            <div class="niveaux">
+                <button class="btn-niveau actif" id="tresFacile">DÉBUTANT</button>
+                <button class="btn-niveau" id="facile">FACILE</button>
+                <button class="btn-niveau" id="normal">NORMAL</button>
+                <button class="btn-niveau" id="difficile">DIFFICILE</button>
+                <button class="btn-niveau" id="extreme">EXTRÊME</button>
+            </div>
+            <div class="vitesse-affichee">
+                Niveau : <span id="niveauText">Débutant</span> | 
+                Vitesse : <span id="vitesseText">Très lente</span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-container">
+                <canvas id="gameCanvas" width="400" height="400"></canvas>
+                
+                <!-- Contrôles mobiles juste en dessous du jeu -->
+                <div class="mobile-game-area">
+                    <div class="controles-mobile-haut">
+                        <button class="btn-mobile" id="btnHaut">↑ HAUT</button>
+                    </div>
+                    <div class="controles-mobile-centre">
+                        <button class="btn-mobile" id="btnGauche">← GAUCHE</button>
+                        <button class="btn-mobile" id="btnBas">↓ BAS</button>
+                        <button class="btn-mobile" id="btnDroite">→ DROITE</button>
+                    </div>
+                </div>
+                
+                <div class="ecran-fin" id="ecranFin">
+                    <h2>GAME OVER</h2>
+                    <p>Votre score :</p>
+                    <div class="score-final" id="scoreFinal">0</div>
+                    <p id="messageFin">Essayez encore !</p>
+                    <button id="btnRejouer">REJOUER</button>
+                </div>
+            </div>
+            
+            <div class="info-jeu">
+                <div class="score-container">
+                    <div class="score-titre">SCORE</div>
+                    <div class="score-valeur" id="score">0</div>
+                    <div class="meilleur-score">Meilleur score : <span id="meilleurScore">0</span></div>
+                </div>
+                
+                <div class="controles">
+                    <h2>CONTRÔLES</h2>
+                    <ul>
+                        <li><span class="touche">↑</span> Monter</li>
+                        <li><span class="touche">↓</span> Descendre</li>
+                        <li><span class="touche">←</span> Gauche</li>
+                        <li><span class="touche">→</span> Droite</li>
+                        <li><span class="touche">ESPACE</span> Pause/Reprise</li>
+                        <li><span class="touche">R</span> Redémarrer</li>
+                    </ul>
+                </div>
+                
+                <div class="instructions">
+                    <p><strong>COMMENT JOUER :</strong></p>
+                    <p>1. Utilisez les touches directionnelles pour déplacer le serpent</p>
+                    <p>2. Mangez la nourriture orange pour grandir et augmenter votre score</p>
+                    <p>3. Évitez les murs et le corps du serpent</p>
+                    <p>4. Plus vous survivez longtemps, plus votre score est élevé !</p>
+                </div>
+                
+                <div class="boutons-jeu">
+                    <button id="btnPause">PAUSE</button>
+                    <button id="btnRedemarrer">REDÉMARRER</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Jeu Snake | Créé avec HTML5, CSS3 & JavaScript | Expérience de jeu classique</p>
+        </footer>
+    </div>
+
+    <script>
+        // Récupération des éléments DOM
+        const canvas = document.getElementById("gameCanvas");
+        const context = canvas.getContext('2d');
+        const scoreElement = document.getElementById("score");
+        const scoreFinalElement = document.getElementById("scoreFinal");
+        const meilleurScoreElement = document.getElementById("meilleurScore");
+        const ecranFin = document.getElementById("ecranFin");
+        const messageFin = document.getElementById("messageFin");
+        const btnPause = document.getElementById("btnPause");
+        const btnRedemarrer = document.getElementById("btnRedemarrer");
+        const btnRejouer = document.getElementById("btnRejouer");
+        const vitesseText = document.getElementById("vitesseText");
+        const niveauText = document.getElementById("niveauText");
+        
+        // Boutons de niveau
+        const btnTresFacile = document.getElementById("tresFacile");
+        const btnFacile = document.getElementById("facile");
+        const btnNormal = document.getElementById("normal");
+        const btnDifficile = document.getElementById("difficile");
+        const btnExtreme = document.getElementById("extreme");
+        
+        // Contrôles mobiles
+        const btnHaut = document.getElementById("btnHaut");
+        const btnBas = document.getElementById("btnBas");
+        const btnGauche = document.getElementById("btnGauche");
+        const btnDroite = document.getElementById("btnDroite");
+        
+        // Configuration du jeu
+        const tailleCase = 20;
+        const tailleCanvas = 400;
+        const tailleGrille = tailleCanvas / tailleCase;
+        
+        // Niveaux de difficulté avec 5 options
+        const niveaux = {
+            tresFacile: { vitesse: 200, nom: "Débutant", vitesseTexte: "Très lente" },
+            facile: { vitesse: 150, nom: "Facile", vitesseTexte: "Lente" },
+            normal: { vitesse: 100, nom: "Normal", vitesseTexte: "Normale" },
+            difficile: { vitesse: 70, nom: "Difficile", vitesseTexte: "Rapide" },
+            extreme: { vitesse: 40, nom: "Extrême", vitesseTexte: "Très rapide" }
+        };
+        
+        // Variables du jeu
+        let serpent = [];
+        let nourriture = {};
+        let score = 0;
+        let meilleurScore = localStorage.getItem('meilleurScoreSnake') || 0;
+        let direction = "";
+        let prochaineDirection = "";
+        let intervalleJeu;
+        let jeuEnPause = false;
+        let jeuEnCours = false;
+        let niveauActuel = "tresFacile";
+        
+        // Initialisation du jeu
+        function initialiserJeu() {
+            // Réinitialiser le serpent
+            serpent = [];
+            serpent[0] = { x: 10 * tailleCase, y: 10 * tailleCase };
+            
+            // Générer la première nourriture
+            genererNourriture();
+            
+            // Réinitialiser le score et la direction
+            score = 0;
+            scoreElement.textContent = score;
+            direction = "";
+            prochaineDirection = "";
+            
+            // Mettre à jour le meilleur score
+            meilleurScoreElement.textContent = meilleurScore;
+            
+            // Mettre à jour l'affichage du niveau
+            niveauText.textContent = niveaux[niveauActuel].nom;
+            vitesseText.textContent = niveaux[niveauActuel].vitesseTexte;
+            
+            // Cacher l'écran de fin de jeu
+            ecranFin.style.display = "none";
+            
+            // Démarrer le jeu avec la vitesse du niveau actuel
+            if (intervalleJeu) clearInterval(intervalleJeu);
+            intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
+            jeuEnCours = true;
+            jeuEnPause = false;
+            btnPause.textContent = "PAUSE";
+        }
+        
+        // Générer de la nourriture à une position aléatoire
+        function genererNourriture() {
+            // Vérifier que la nourriture n'apparaît pas sur le serpent
+            let nourritureSurSerpent;
+            do {
+                nourritureSurSerpent = false;
+                nourriture = {
+                    x: Math.floor(Math.random() * tailleGrille) * tailleCase,
+                    y: Math.floor(Math.random() * tailleGrille) * tailleCase
+                };
+                
+                // Vérifier si la nourriture est sur le serpent
+                for (let i = 0; i < serpent.length; i++) {
+                    if (serpent[i].x === nourriture.x && serpent[i].y === nourriture.y) {
+                        nourritureSurSerpent = true;
+                        break;
+                    }
+                }
+            } while (nourritureSurSerpent);
+        }
+        
+        // Fonction de dessin principale
+        function dessiner() {
+            // Effacer le canvas
+            context.clearRect(0, 0, tailleCanvas, tailleCanvas);
+            
+            // Dessiner la grille (optionnel, pour le design)
+            dessinerGrille();
+            
+            // Dessiner le serpent
+            for (let i = 0; i < serpent.length; i++) {
+                // Corps du serpent
+                context.fillStyle = i === 0 ? "#4CAF50" : "#45a049"; // Tête verte plus claire
+                context.fillRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
+                
+                // Contour du serpent
+                context.strokeStyle = "#2E7D32";
+                context.lineWidth = 2;
+                context.strokeRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
+                
+                // Yeux sur la tête du serpent
+                if (i === 0) {
+                    context.fillStyle = "#000";
+                    // Position des yeux selon la direction
+                    let tailleOeil = tailleCase / 5;
+                    let decalage = tailleCase / 3;
+                    
+                    // Yeux de la tête
+                    if (direction === "droite") {
+                        context.fillRect(serpent[i].x + tailleCase - decalage, serpent[i].y + decalage, tailleOeil, tailleOeil);
+                        context.fillRect(serpent[i].x + tailleCase - decalage, serpent[i].y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
+                    } else if (direction === "gauche") {
+                        context.fillRect(serpent[i].x + decalage - tailleOeil, serpent[i].y + decalage, tailleOeil, tailleOeil);
+                        context.fillRect(serpent[i].x + decalage - tailleOeil, serpent[i].y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
+                    } else if (direction === "haut") {
+                        context.fillRect(serpent[i].x + decalage, serpent[i].y + decalage - tailleOeil, tailleOeil, tailleOeil);
+                        context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + decalage - tailleOeil, tailleOeil, tailleOeil);
+                    } else if (direction === "bas") {
+                        context.fillRect(serpent[i].x + decalage, serpent[i].y + tailleCase - decalage, tailleOeil, tailleOeil);
+                        context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + tailleCase - decalage, tailleOeil, tailleOeil);
+                    } else {
+                        // Direction par défaut (début du jeu)
+                        context.fillRect(serpent[i].x + decalage, serpent[i].y + decalage, tailleOeil, tailleOeil);
+                        context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + decalage, tailleOeil, tailleOeil);
+                    }
+                }
+            }
+            
+            // Dessiner la nourriture
+            context.fillStyle = "#FF9800";
+            context.beginPath();
+            context.arc(nourriture.x + tailleCase/2, nourriture.y + tailleCase/2, tailleCase/2 - 2, 0, Math.PI * 2);
+            context.fill();
+            
+            context.fillStyle = "#FFCC80";
+            context.beginPath();
+            context.arc(nourriture.x + tailleCase/2, nourriture.y + tailleCase/2, tailleCase/4, 0, Math.PI * 2);
+            context.fill();
+            
+            // Mettre à jour la direction
+            if (prochaineDirection !== "") {
+                direction = prochaineDirection;
+                prochaineDirection = "";
+            }
+            
+            // Calculer la nouvelle position de la tête
+            let serpentX = serpent[0].x;
+            let serpentY = serpent[0].y;
+            
+            if (direction === "gauche") serpentX -= tailleCase;
+            if (direction === "haut") serpentY -= tailleCase;
+            if (direction === "droite") serpentX += tailleCase;
+            if (direction === "bas") serpentY += tailleCase;
+            
+            // Vérifier si le serpent mange la nourriture
+            if (serpentX === nourriture.x && serpentY === nourriture.y) {
+                score++;
+                scoreElement.textContent = score;
+                genererNourriture();
+            } else {
+                // Retirer la queue si aucune nourriture n'a été mangée
+                serpent.pop();
+            }
+            
+            // Créer la nouvelle tête
+            let nouvelleTete = { x: serpentX, y: serpentY };
+            
+            // Vérifier les collisions
+            if (serpentX < 0 || serpentY < 0 || serpentX >= tailleCanvas || serpentY >= tailleCanvas || collision(nouvelleTete, serpent)) {
+                finDuJeu();
+                return;
+            }
+            
+            // Ajouter la nouvelle tête au serpent
+            serpent.unshift(nouvelleTete);
+        }
+        
+        // Dessiner une grille subtile en arrière-plan
+        function dessinerGrille() {
+            context.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            context.lineWidth = 1;
+            
+            // Lignes verticales
+            for (let x = 0; x <= tailleCanvas; x += tailleCase) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, tailleCanvas);
+                context.stroke();
+            }
+            
+            // Lignes horizontales
+            for (let y = 0; y <= tailleCanvas; y += tailleCase) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(tailleCanvas, y);
+                context.stroke();
+            }
+        }
+        
+        // Vérifier les collisions
+        function collision(tete, tableau) {
+            for (let i = 0; i < tableau.length; i++) {
+                if (tete.x === tableau[i].x && tete.y === tableau[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Fin du jeu
+        function finDuJeu() {
+            clearInterval(intervalleJeu);
+            jeuEnCours = false;
+            
+            // Mettre à jour le meilleur score si nécessaire
+            if (score > meilleurScore) {
+                meilleurScore = score;
+                localStorage.setItem('meilleurScoreSnake', meilleurScore);
+                meilleurScoreElement.textContent = meilleurScore;
+            }
+            
+            // Déterminer le message en fonction du score
+            let message = "";
+            if (score < 5) {
+                message = "Vous pouvez faire mieux !";
+            } else if (score < 10) {
+                message = "Bon début !";
+            } else if (score < 20) {
+                message = "Bien joué !";
+            } else if (score < 30) {
+                message = "Excellent !";
+            } else if (score < 50) {
+                message = "Incroyable !";
+            } else {
+                message = "LÉGENDAIRE ! Vous maîtrisez Snake !";
+            }
+            
+            // Afficher l'écran de fin
+            scoreFinalElement.textContent = score;
+            messageFin.textContent = message;
+            ecranFin.style.display = "flex";
+        }
+        
+        // Gestion des directions
+        function controlerDirection(nouvelleDirection) {
+            // Empêcher les mouvements inverses
+            if ((nouvelleDirection === "gauche" && direction !== "droite") ||
+                (nouvelleDirection === "haut" && direction !== "bas") ||
+                (nouvelleDirection === "droite" && direction !== "gauche") ||
+                (nouvelleDirection === "bas" && direction !== "haut")) {
+                prochaineDirection = nouvelleDirection;
+            }
+        }
+        
+        // Changer le niveau de difficulté
+        function changerNiveau(niveau) {
+            // Mettre à jour les boutons
+            btnTresFacile.classList.remove("actif");
+            btnFacile.classList.remove("actif");
+            btnNormal.classList.remove("actif");
+            btnDifficile.classList.remove("actif");
+            btnExtreme.classList.remove("actif");
+            
+            // Activer le bouton correspondant
+            document.getElementById(niveau).classList.add("actif");
+            
+            // Mettre à jour le niveau actuel
+            niveauActuel = niveau;
+            niveauText.textContent = niveaux[niveau].nom;
+            vitesseText.textContent = niveaux[niveau].vitesseTexte;
+            
+            // Redémarrer le jeu avec la nouvelle vitesse si le jeu est en cours
+            if (jeuEnCours && !jeuEnPause) {
+                clearInterval(intervalleJeu);
+                intervalleJeu = setInterval(dessiner, niveaux[niveau].vitesse);
+            }
+        }
+        
+        // Écouteurs d'événements pour le clavier
+        document.addEventListener("keydown", function(event) {
+            // Touches de direction
+            if (event.keyCode === 37 || event.key === "ArrowLeft") {
+                controlerDirection("gauche");
+            } else if (event.keyCode === 38 || event.key === "ArrowUp") {
+                controlerDirection("haut");
+            } else if (event.keyCode === 39 || event.key === "ArrowRight") {
+                controlerDirection("droite");
+            } else if (event.keyCode === 40 || event.key === "ArrowDown") {
+                controlerDirection("bas");
+            }
+            
+            // Espace pour pause/reprise
+            else if (event.keyCode === 32 || event.key === " ") {
+                basculerPause();
+                event.preventDefault(); // Empêcher le défilement de la page
+            }
+            
+            // R pour redémarrer
+            else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
+                initialiserJeu();
+            }
+        });
+        
+        // Contrôles mobiles
+        btnHaut.addEventListener("click", () => controlerDirection("haut"));
+        btnBas.addEventListener("click", () => controlerDirection("bas"));
+        btnGauche.addEventListener("click", () => controlerDirection("gauche"));
+        btnDroite.addEventListener("click", () => controlerDirection("droite"));
+        
+        // Boutons de niveau
+        btnTresFacile.addEventListener("click", () => changerNiveau("tresFacile"));
+        btnFacile.addEventListener("click", () => changerNiveau("facile"));
+        btnNormal.addEventListener("click", () => changerNiveau("normal"));
+        btnDifficile.addEventListener("click", () => changerNiveau("difficile"));
+        btnExtreme.addEventListener("click", () => changerNiveau("extreme"));
+        
+        // Fonction pour mettre en pause/reprendre le jeu
+        function basculerPause() {
+            if (!jeuEnCours) return;
+            
+            if (jeuEnPause) {
+                // Reprendre le jeu
+                intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
+                btnPause.textContent = "PAUSE";
+                jeuEnPause = false;
+            } else {
+                // Mettre en pause le jeu
+                clearInterval(intervalleJeu);
+                btnPause.textContent = "REPRENDRE";
+                jeuEnPause = true;
+            }
+        }
+        
+        // Écouteurs d'événements pour les boutons
+        btnPause.addEventListener("click", basculerPause);
+        btnRedemarrer.addEventListener("click", initialiserJeu);
+        btnRejouer.addEventListener("click", initialiserJeu);
+        
+        // Démarrer le jeu au chargement de la page
+        window.onload = function() {
+            // Initialiser le meilleur score
+            meilleurScoreElement.textContent = meilleurScore;
+            initialiserJeu();
+            
+            // Afficher/masquer les contrôles mobiles selon la taille d'écran
+            function ajusterControlesMobile() {
+                const controlesMobile = document.querySelector('.mobile-game-area');
+                if (window.innerWidth <= 768) {
+                    controlesMobile.style.display = 'block';
+                } else {
+                    controlesMobile.style.display = 'none';
+                }
+            }
+            
+            ajusterControlesMobile();
+            window.addEventListener('resize', ajusterControlesMobile);
+        };
+    </script>
+</body>
+</html>

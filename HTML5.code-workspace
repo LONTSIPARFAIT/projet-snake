@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../Developpement web/HTML5"
+		},
+		{
+			"path": "../canvas"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "HTML5"
+	}
+}
