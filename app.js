@@ -35,13 +35,13 @@ const tailleCase = 20;
 const tailleCanvas = 400;
 const tailleGrille = tailleCanvas / tailleCase;
 
-// Niveaux de difficulté avec 5 options
+// Niveaux de difficulté - VITESSES RÉDUITES pour être moins rapides
 const niveaux = {
-    tresFacile: { vitesse: 200, nom: "Débutant", vitesseTexte: "Très lente" },
-    facile: { vitesse: 150, nom: "Facile", vitesseTexte: "Lente" },
-    normal: { vitesse: 100, nom: "Normal", vitesseTexte: "Normale" },
-    difficile: { vitesse: 70, nom: "Difficile", vitesseTexte: "Rapide" },
-    extreme: { vitesse: 40, nom: "Extrême", vitesseTexte: "Très rapide" }
+    tresFacile: { vitesse: 180, nom: "Débutant", vitesseTexte: "Très lente" },
+    facile: { vitesse: 120, nom: "Facile", vitesseTexte: "Lente" },
+    normal: { vitesse: 90, nom: "Normal", vitesseTexte: "Normale" },
+    difficile: { vitesse: 60, nom: "Difficile", vitesseTexte: "Rapide" },
+    extreme: { vitesse: 35, nom: "Extrême", vitesseTexte: "Très rapide" }
 };
 
 // Variables du jeu
@@ -57,9 +57,57 @@ let jeuEnCours = false;
 let niveauActuel = "tresFacile";
 let sonActif = false; // Désactivé par défaut pour mobile
 
+// Fonction pour dessiner l'état initial du jeu
+function dessinerJeuInitial() {
+    // Effacer le canvas
+    context.clearRect(0, 0, tailleCanvas, tailleCanvas);
+    
+    // Dessiner la grille
+    dessinerGrille();
+    
+    // Dessiner le serpent initial
+    for (let i = 0; i < serpent.length; i++) {
+        // Corps du serpent avec dégradé
+        let gradient;
+        if (i === 0) {
+            // Tête du serpent
+            gradient = context.createLinearGradient(
+                serpent[i].x, serpent[i].y,
+                serpent[i].x + tailleCase, serpent[i].y + tailleCase
+            );
+            gradient.addColorStop(0, '#4CAF50');
+            gradient.addColorStop(1, '#2E7D32');
+        } else {
+            // Corps du serpent
+            gradient = context.createLinearGradient(
+                serpent[i].x, serpent[i].y,
+                serpent[i].x + tailleCase, serpent[i].y + tailleCase
+            );
+            gradient.addColorStop(0, '#45a049');
+            gradient.addColorStop(1, '#388E3C');
+        }
+        
+        context.fillStyle = gradient;
+        context.fillRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
+        
+        // Contour du serpent
+        context.strokeStyle = i === 0 ? '#1B5E20' : '#2E7D32';
+        context.lineWidth = 2;
+        context.strokeRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
+        
+        // Yeux sur la tête du serpent
+        if (i === 0) {
+            dessinerYeux(serpent[i].x, serpent[i].y, "droite");
+        }
+    }
+    
+    // Dessiner la nourriture
+    dessinerNourriture();
+}
+
 // Initialisation du jeu
 function initialiserJeu() {
-    // Réinitialiser le serpent - CORRECTION ICI
+    // Réinitialiser le serpent
     serpent = [];
     // Position initiale au centre
     serpent[0] = { 
@@ -86,6 +134,9 @@ function initialiserJeu() {
     
     // Cacher l'écran de fin de jeu
     ecranFin.style.display = "none";
+    
+    // Dessiner l'état initial
+    dessinerJeuInitial();
     
     // Démarrer le jeu avec la vitesse du niveau actuel
     if (intervalleJeu) clearInterval(intervalleJeu);
@@ -121,7 +172,7 @@ function genererNourriture() {
     } while (nourritureSurSerpent);
 }
 
-// Fonction de dessin principale - CORRIGÉE
+// Fonction de dessin principale
 function dessiner() {
     // Effacer le canvas
     context.clearRect(0, 0, tailleCanvas, tailleCanvas);
@@ -145,7 +196,7 @@ function dessiner() {
     
     // Vérifier si le serpent mange la nourriture
     if (serpentX === nourriture.x && serpentY === nourriture.y) {
-        score += 10;
+        score += 1; // AJOUTE 1 POINT, PAS 10
         scoreElement.textContent = score;
         longueurSerpentElement.textContent = serpent.length + 1; // +1 car on va ajouter la tête
         genererNourriture();
@@ -238,9 +289,9 @@ function dessinerYeux(x, y, dir) {
             context.fillRect(x + tailleCase - decalage - tailleOeil, y + tailleCase - decalage, tailleOeil, tailleOeil);
             break;
         default:
-            // Direction par défaut
-            context.fillRect(x + decalage, y + decalage, tailleOeil, tailleOeil);
-            context.fillRect(x + tailleCase - decalage - tailleOeil, y + decalage, tailleOeil, tailleOeil);
+            // Direction par défaut (droite)
+            context.fillRect(x + tailleCase - decalage, y + decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
     }
 }
 
@@ -305,15 +356,15 @@ function finDuJeu() {
     
     // Déterminer le message en fonction du score
     let message = "";
-    if (score < 20) {
-        message = "Vous pouvez faire mieux !";
-    } else if (score < 50) {
+    if (score < 5) {
+        message = "Essayez encore !";
+    } else if (score < 15) {
         message = "Bon début !";
-    } else if (score < 100) {
+    } else if (score < 30) {
         message = "Bien joué !";
-    } else if (score < 200) {
+    } else if (score < 50) {
         message = "Excellent !";
-    } else if (score < 500) {
+    } else if (score < 100) {
         message = "Incroyable !";
     } else {
         message = "LÉGENDAIRE ! Vous maîtrisez Snake !";
@@ -336,7 +387,7 @@ function controlerDirection(nouvelleDirection) {
     }
 }
 
-// Changer le niveau de difficulté - CORRIGÉ
+// Changer le niveau de difficulté
 function changerNiveau(niveau) {
     // Mettre à jour les boutons
     document.querySelectorAll('.btn-niveau').forEach(btn => {
@@ -436,7 +487,7 @@ if (btnSonMobile) {
     btnSonMobile.addEventListener("click", basculerSon);
 }
 
-// Boutons de niveau - CORRIGÉ
+// Boutons de niveau
 btnTresFacile.addEventListener("click", () => changerNiveau("tresFacile"));
 btnFacile.addEventListener("click", () => changerNiveau("facile"));
 btnNormal.addEventListener("click", () => changerNiveau("normal"));
@@ -454,8 +505,29 @@ window.onload = function() {
     // Initialiser le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
     
-    // Initialiser le jeu
-    initialiserJeu();
+    // Initialiser le jeu et DESSINER IMMÉDIATEMENT
+    // Réinitialiser le serpent
+    serpent = [];
+    // Position initiale au centre
+    serpent[0] = { 
+        x: Math.floor(tailleGrille/2) * tailleCase, 
+        y: Math.floor(tailleGrille/2) * tailleCase 
+    };
+    
+    // Générer la première nourriture
+    genererNourriture();
+    
+    // Mettre à jour l'affichage du niveau
+    niveauText.textContent = niveaux[niveauActuel].nom;
+    vitesseText.textContent = niveaux[niveauActuel].vitesseTexte;
+    
+    // Dessiner le jeu initial IMMÉDIATEMENT
+    dessinerJeuInitial();
+    
+    // Démarrer le jeu
+    intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
+    jeuEnCours = true;
+    jeuEnPause = false;
     
     // Afficher/masquer les contrôles mobiles selon la taille d'écran
     function ajusterControlesMobile() {
