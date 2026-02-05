@@ -10,7 +10,6 @@ const messageFin = document.getElementById("messageFin");
 const btnPause = document.getElementById("btnPause");
 const btnRedemarrer = document.getElementById("btnRedemarrer");
 const btnRejouer = document.getElementById("btnRejouer");
-const btnPartager = document.getElementById("btnPartager");
 const btnSon = document.getElementById("btnSon");
 const vitesseText = document.getElementById("vitesseText");
 const niveauText = document.getElementById("niveauText");
@@ -29,6 +28,7 @@ const btnGauche = document.getElementById("btnGauche");
 const btnDroite = document.getElementById("btnDroite");
 const btnPauseMobile = document.getElementById("btnPauseMobile");
 const btnRedemarrerMobile = document.getElementById("btnRedemarrerMobile");
+const btnSonMobile = document.getElementById("btnSonMobile");
 
 // Configuration du jeu
 const tailleCase = 20;
@@ -55,47 +55,17 @@ let intervalleJeu;
 let jeuEnPause = false;
 let jeuEnCours = false;
 let niveauActuel = "tresFacile";
-let sonActif = true;
-
-// Initialiser l'audio
-function initialiserAudio() {
-    // Cette fonction initialiserait l'audio si on voulait ajouter des sons
-    // Pour l'instant, on laisse la structure pour une future implémentation
-    sonActif = false; // Désactivé par défaut
-    btnSon.innerHTML = '<i class="fas fa-volume-mute"></i> SON';
-}
-
-// Jouer un son
-function jouerSon(frequence, duree) {
-    if (!sonActif) return;
-    
-    // Implémentation simple avec l'API Web Audio
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = frequence;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duree);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duree);
-    } catch (e) {
-        console.log("Erreur de lecture audio");
-    }
-}
+let sonActif = false; // Désactivé par défaut pour mobile
 
 // Initialisation du jeu
 function initialiserJeu() {
-    // Réinitialiser le serpent
+    // Réinitialiser le serpent - CORRECTION ICI
     serpent = [];
-    serpent[0] = { x: 10 * tailleCase, y: 10 * tailleCase };
+    // Position initiale au centre
+    serpent[0] = { 
+        x: Math.floor(tailleGrille/2) * tailleCase, 
+        y: Math.floor(tailleGrille/2) * tailleCase 
+    };
     
     // Générer la première nourriture
     genererNourriture();
@@ -104,8 +74,8 @@ function initialiserJeu() {
     score = 0;
     scoreElement.textContent = score;
     longueurSerpentElement.textContent = serpent.length;
-    direction = "";
-    prochaineDirection = "";
+    direction = "droite"; // Direction initiale
+    prochaineDirection = "droite";
     
     // Mettre à jour le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
@@ -122,11 +92,12 @@ function initialiserJeu() {
     intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
     jeuEnCours = true;
     jeuEnPause = false;
-    btnPause.innerHTML = '<i class="fas fa-pause"></i> PAUSE';
-    if (btnPauseMobile) btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i> PAUSE';
     
-    // Jouer un son de démarrage
-    if (sonActif) jouerSon(523.25, 0.1);
+    // Mettre à jour les boutons pause
+    btnPause.innerHTML = '<i class="fas fa-pause"></i> PAUSE';
+    if (btnPauseMobile) {
+        btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i>';
+    }
 }
 
 // Générer de la nourriture à une position aléatoire
@@ -150,15 +121,62 @@ function genererNourriture() {
     } while (nourritureSurSerpent);
 }
 
-// Fonction de dessin principale
+// Fonction de dessin principale - CORRIGÉE
 function dessiner() {
     // Effacer le canvas
     context.clearRect(0, 0, tailleCanvas, tailleCanvas);
     
-    // Dessiner la grille (optionnel, pour le design)
+    // Dessiner la grille
     dessinerGrille();
     
+    // Mettre à jour la direction
+    if (prochaineDirection !== "") {
+        direction = prochaineDirection;
+    }
+    
+    // Calculer la nouvelle position de la tête
+    let serpentX = serpent[0].x;
+    let serpentY = serpent[0].y;
+    
+    if (direction === "gauche") serpentX -= tailleCase;
+    else if (direction === "haut") serpentY -= tailleCase;
+    else if (direction === "droite") serpentX += tailleCase;
+    else if (direction === "bas") serpentY += tailleCase;
+    
+    // Vérifier si le serpent mange la nourriture
+    if (serpentX === nourriture.x && serpentY === nourriture.y) {
+        score += 10;
+        scoreElement.textContent = score;
+        longueurSerpentElement.textContent = serpent.length + 1; // +1 car on va ajouter la tête
+        genererNourriture();
+    } else {
+        // Retirer la queue si aucune nourriture n'a été mangée
+        serpent.pop();
+    }
+    
+    // Créer la nouvelle tête
+    let nouvelleTete = { x: serpentX, y: serpentY };
+    
+    // Vérifier les collisions
+    if (serpentX < 0 || serpentY < 0 || 
+        serpentX >= tailleCanvas || serpentY >= tailleCanvas || 
+        collision(nouvelleTete, serpent)) {
+        finDuJeu();
+        return;
+    }
+    
+    // Ajouter la nouvelle tête au serpent
+    serpent.unshift(nouvelleTete);
+    
+    // Dessiner la nourriture
+    dessinerNourriture();
+    
     // Dessiner le serpent
+    dessinerSerpent();
+}
+
+// Dessiner le serpent
+function dessinerSerpent() {
     for (let i = 0; i < serpent.length; i++) {
         // Corps du serpent avec dégradé
         let gradient;
@@ -170,18 +188,17 @@ function dessiner() {
             );
             gradient.addColorStop(0, '#4CAF50');
             gradient.addColorStop(1, '#2E7D32');
-            context.fillStyle = gradient;
         } else {
-            // Corps du serpent avec dégradé plus foncé
+            // Corps du serpent
             gradient = context.createLinearGradient(
                 serpent[i].x, serpent[i].y,
                 serpent[i].x + tailleCase, serpent[i].y + tailleCase
             );
             gradient.addColorStop(0, '#45a049');
             gradient.addColorStop(1, '#388E3C');
-            context.fillStyle = gradient;
         }
         
+        context.fillStyle = gradient;
         context.fillRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
         
         // Contour du serpent
@@ -191,90 +208,55 @@ function dessiner() {
         
         // Yeux sur la tête du serpent
         if (i === 0) {
-            context.fillStyle = "#000";
-            // Position des yeux selon la direction
-            let tailleOeil = tailleCase / 5;
-            let decalage = tailleCase / 3;
-            
-            // Yeux de la tête
-            if (direction === "droite") {
-                context.fillRect(serpent[i].x + tailleCase - decalage, serpent[i].y + decalage, tailleOeil, tailleOeil);
-                context.fillRect(serpent[i].x + tailleCase - decalage, serpent[i].y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
-            } else if (direction === "gauche") {
-                context.fillRect(serpent[i].x + decalage - tailleOeil, serpent[i].y + decalage, tailleOeil, tailleOeil);
-                context.fillRect(serpent[i].x + decalage - tailleOeil, serpent[i].y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
-            } else if (direction === "haut") {
-                context.fillRect(serpent[i].x + decalage, serpent[i].y + decalage - tailleOeil, tailleOeil, tailleOeil);
-                context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + decalage - tailleOeil, tailleOeil, tailleOeil);
-            } else if (direction === "bas") {
-                context.fillRect(serpent[i].x + decalage, serpent[i].y + tailleCase - decalage, tailleOeil, tailleOeil);
-                context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + tailleCase - decalage, tailleOeil, tailleOeil);
-            } else {
-                // Direction par défaut (début du jeu)
-                context.fillRect(serpent[i].x + decalage, serpent[i].y + decalage, tailleOeil, tailleOeil);
-                context.fillRect(serpent[i].x + tailleCase - decalage - tailleOeil, serpent[i].y + decalage, tailleOeil, tailleOeil);
-            }
+            dessinerYeux(serpent[i].x, serpent[i].y, direction);
         }
     }
+}
+
+// Dessiner les yeux du serpent
+function dessinerYeux(x, y, dir) {
+    context.fillStyle = "#000";
+    let tailleOeil = tailleCase / 5;
+    let decalage = tailleCase / 3;
     
-    // Dessiner la nourriture avec effet de brillance
+    // Position des yeux selon la direction
+    switch(dir) {
+        case "droite":
+            context.fillRect(x + tailleCase - decalage, y + decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
+            break;
+        case "gauche":
+            context.fillRect(x + decalage - tailleOeil, y + decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + decalage - tailleOeil, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
+            break;
+        case "haut":
+            context.fillRect(x + decalage, y + decalage - tailleOeil, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage - tailleOeil, y + decalage - tailleOeil, tailleOeil, tailleOeil);
+            break;
+        case "bas":
+            context.fillRect(x + decalage, y + tailleCase - decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage - tailleOeil, y + tailleCase - decalage, tailleOeil, tailleOeil);
+            break;
+        default:
+            // Direction par défaut
+            context.fillRect(x + decalage, y + decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage - tailleOeil, y + decalage, tailleOeil, tailleOeil);
+    }
+}
+
+// Dessiner la nourriture
+function dessinerNourriture() {
+    // Corps principal
     context.fillStyle = "#FF9800";
     context.beginPath();
     context.arc(nourriture.x + tailleCase/2, nourriture.y + tailleCase/2, tailleCase/2 - 2, 0, Math.PI * 2);
     context.fill();
     
-    // Effet de brillance sur la nourriture
+    // Reflet
     context.fillStyle = "#FFCC80";
     context.beginPath();
     context.arc(nourriture.x + tailleCase/3, nourriture.y + tailleCase/3, tailleCase/6, 0, Math.PI * 2);
     context.fill();
-    
-    // Effet d'ombre
-    context.fillStyle = "rgba(0, 0, 0, 0.2)";
-    context.beginPath();
-    context.ellipse(nourriture.x + tailleCase/2 + 2, nourriture.y + tailleCase/2 + 2, tailleCase/2 - 1, tailleCase/4, 0, 0, Math.PI * 2);
-    context.fill();
-    
-    // Mettre à jour la direction
-    if (prochaineDirection !== "") {
-        direction = prochaineDirection;
-        prochaineDirection = "";
-    }
-    
-    // Calculer la nouvelle position de la tête
-    let serpentX = serpent[0].x;
-    let serpentY = serpent[0].y;
-    
-    if (direction === "gauche") serpentX -= tailleCase;
-    if (direction === "haut") serpentY -= tailleCase;
-    if (direction === "droite") serpentX += tailleCase;
-    if (direction === "bas") serpentY += tailleCase;
-    
-    // Vérifier si le serpent mange la nourriture
-    if (serpentX === nourriture.x && serpentY === nourriture.y) {
-        score += 10;
-        scoreElement.textContent = score;
-        longueurSerpentElement.textContent = serpent.length + 1;
-        genererNourriture();
-        
-        // Jouer un son de nourriture
-        if (sonActif) jouerSon(659.25, 0.2);
-    } else {
-        // Retirer la queue si aucune nourriture n'a été mangée
-        serpent.pop();
-    }
-    
-    // Créer la nouvelle tête
-    let nouvelleTete = { x: serpentX, y: serpentY };
-    
-    // Vérifier les collisions
-    if (serpentX < 0 || serpentY < 0 || serpentX >= tailleCanvas || serpentY >= tailleCanvas || collision(nouvelleTete, serpent)) {
-        finDuJeu();
-        return;
-    }
-    
-    // Ajouter la nouvelle tête au serpent
-    serpent.unshift(nouvelleTete);
 }
 
 // Dessiner une grille subtile en arrière-plan
@@ -341,9 +323,6 @@ function finDuJeu() {
     scoreFinalElement.textContent = score;
     messageFin.textContent = message;
     ecranFin.style.display = "flex";
-    
-    // Jouer un son de fin
-    if (sonActif) jouerSon(261.63, 0.5);
 }
 
 // Gestion des directions
@@ -357,14 +336,12 @@ function controlerDirection(nouvelleDirection) {
     }
 }
 
-// Changer le niveau de difficulté
+// Changer le niveau de difficulté - CORRIGÉ
 function changerNiveau(niveau) {
     // Mettre à jour les boutons
-    btnTresFacile.classList.remove("actif");
-    btnFacile.classList.remove("actif");
-    btnNormal.classList.remove("actif");
-    btnDifficile.classList.remove("actif");
-    btnExtreme.classList.remove("actif");
+    document.querySelectorAll('.btn-niveau').forEach(btn => {
+        btn.classList.remove("actif");
+    });
     
     // Activer le bouton correspondant
     document.getElementById(niveau).classList.add("actif");
@@ -389,13 +366,17 @@ function basculerPause() {
         // Reprendre le jeu
         intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
         btnPause.innerHTML = '<i class="fas fa-pause"></i> PAUSE';
-        if (btnPauseMobile) btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i> PAUSE';
+        if (btnPauseMobile) {
+            btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i>';
+        }
         jeuEnPause = false;
     } else {
         // Mettre en pause le jeu
         clearInterval(intervalleJeu);
         btnPause.innerHTML = '<i class="fas fa-play"></i> REPRENDRE';
-        if (btnPauseMobile) btnPauseMobile.innerHTML = '<i class="fas fa-play"></i> REPRENDRE';
+        if (btnPauseMobile) {
+            btnPauseMobile.innerHTML = '<i class="fas fa-play"></i>';
+        }
         jeuEnPause = true;
     }
 }
@@ -405,61 +386,34 @@ function basculerSon() {
     sonActif = !sonActif;
     if (sonActif) {
         btnSon.innerHTML = '<i class="fas fa-volume-up"></i> SON';
-        // Jouer un son de confirmation
-        jouerSon(523.25, 0.1);
+        if (btnSonMobile) {
+            btnSonMobile.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
     } else {
         btnSon.innerHTML = '<i class="fas fa-volume-mute"></i> SON';
+        if (btnSonMobile) {
+            btnSonMobile.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        }
     }
 }
 
-// Partager le score
-function partagerScore() {
-    const texte = `J'ai obtenu ${score} points au jeu Snake ! 🐍\nMon meilleur score : ${meilleurScore}\n\nVenez essayer !`;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Mon score au jeu Snake',
-            text: texte,
-            url: window.location.href
-        }).catch(console.error);
-    } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(texte).then(() => {
-            alert('Score copié dans le presse-papiers !');
-        }).catch(console.error);
-    } else {
-        // Fallback pour les navigateurs plus anciens
-        prompt('Copiez ce texte pour partager votre score :', texte);
-    }
-}
-
-// Écouteurs d'événements pour le clavier
+// Écouteurs d'événements pour le clavier (seulement sur bureau)
 document.addEventListener("keydown", function(event) {
-    // Touches de direction
-    if (event.keyCode === 37 || event.key === "ArrowLeft") {
-        controlerDirection("gauche");
-    } else if (event.keyCode === 38 || event.key === "ArrowUp") {
-        controlerDirection("haut");
-    } else if (event.keyCode === 39 || event.key === "ArrowRight") {
-        controlerDirection("droite");
-    } else if (event.keyCode === 40 || event.key === "ArrowDown") {
-        controlerDirection("bas");
-    }
-    
-    // Espace pour pause/reprise
-    else if (event.keyCode === 32 || event.key === " ") {
-        basculerPause();
-        event.preventDefault(); // Empêcher le défilement de la page
-    }
-    
-    // R pour redémarrer
-    else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
-        initialiserJeu();
-    }
-    
-    // Échap pour quitter
-    else if (event.keyCode === 27) {
-        if (jeuEnCours && !jeuEnPause) {
+    // Ne fonctionne que sur bureau
+    if (window.innerWidth > 768) {
+        if (event.keyCode === 37 || event.key === "ArrowLeft") {
+            controlerDirection("gauche");
+        } else if (event.keyCode === 38 || event.key === "ArrowUp") {
+            controlerDirection("haut");
+        } else if (event.keyCode === 39 || event.key === "ArrowRight") {
+            controlerDirection("droite");
+        } else if (event.keyCode === 40 || event.key === "ArrowDown") {
+            controlerDirection("bas");
+        } else if (event.keyCode === 32 || event.key === " ") {
             basculerPause();
+            event.preventDefault();
+        } else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
+            initialiserJeu();
         }
     }
 });
@@ -478,7 +432,11 @@ if (btnRedemarrerMobile) {
     btnRedemarrerMobile.addEventListener("click", initialiserJeu);
 }
 
-// Boutons de niveau
+if (btnSonMobile) {
+    btnSonMobile.addEventListener("click", basculerSon);
+}
+
+// Boutons de niveau - CORRIGÉ
 btnTresFacile.addEventListener("click", () => changerNiveau("tresFacile"));
 btnFacile.addEventListener("click", () => changerNiveau("facile"));
 btnNormal.addEventListener("click", () => changerNiveau("normal"));
@@ -489,71 +447,73 @@ btnExtreme.addEventListener("click", () => changerNiveau("extreme"));
 btnPause.addEventListener("click", basculerPause);
 btnRedemarrer.addEventListener("click", initialiserJeu);
 btnRejouer.addEventListener("click", initialiserJeu);
-btnPartager.addEventListener("click", partagerScore);
 btnSon.addEventListener("click", basculerSon);
 
 // Démarrer le jeu au chargement de la page
 window.onload = function() {
-    // Initialiser l'audio
-    initialiserAudio();
-    
     // Initialiser le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
+    
+    // Initialiser le jeu
     initialiserJeu();
     
     // Afficher/masquer les contrôles mobiles selon la taille d'écran
     function ajusterControlesMobile() {
         const controlesMobile = document.querySelector('.mobile-game-area');
-        if (controlesMobile) {
-            if (window.innerWidth <= 768) {
-                controlesMobile.style.display = 'block';
-            } else {
-                controlesMobile.style.display = 'none';
-            }
+        const controlesBureau = document.querySelector('.controles-bureau');
+        
+        if (window.innerWidth <= 768) {
+            // Mode mobile
+            if (controlesMobile) controlesMobile.style.display = 'block';
+            if (controlesBureau) controlesBureau.style.display = 'none';
+        } else {
+            // Mode bureau
+            if (controlesMobile) controlesMobile.style.display = 'none';
+            if (controlesBureau) controlesBureau.style.display = 'block';
         }
     }
     
     ajusterControlesMobile();
     window.addEventListener('resize', ajusterControlesMobile);
     
-    // Empêcher le défilement avec les touches fléchées sur mobile
+    // Empêcher le défilement avec les touches fléchées
     document.addEventListener('keydown', function(e) {
-        if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code) > -1) {
+        if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',' '].indexOf(e.code) > -1) {
             e.preventDefault();
         }
-    });
+    }, false);
     
     // Empêcher le zoom avec double tap sur mobile
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(event) {
-        const now = (new Date()).getTime();
+        const now = Date.now();
         if (now - lastTouchEnd <= 300) {
             event.preventDefault();
         }
         lastTouchEnd = now;
     }, false);
     
-    // Prévenir le défilement quand on touche les contrôles mobiles
+    // Désactiver le menu contextuel sur les boutons mobiles
     document.querySelectorAll('.btn-mobile, .btn-mobile-action').forEach(button => {
+        button.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Empêcher le comportement par défaut du touch
         button.addEventListener('touchstart', function(e) {
             e.preventDefault();
-        });
+        }, {passive: false});
     });
 };
 
-// Gestion du redimensionnement de la fenêtre
+// Redimensionnement responsive du canvas
 window.addEventListener('resize', function() {
-    // Réajuster la taille du canvas si nécessaire
     const canvasContainer = document.querySelector('.game-container');
     const canvasWidth = canvasContainer.offsetWidth;
     
     if (canvasWidth < 400) {
         canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
     }
 });
-
-// Mode sombre/clair automatique basé sur les préférences système
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-    document.body.style.background = "linear-gradient(135deg, #f5f7fa, #c3cfe2)";
-    document.body.style.color = "#333";
-}
