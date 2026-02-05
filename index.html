@@ -10,32 +10,32 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-gamepad"></i> JEU SNAKE</h1>
-            <p class="sous-titre">Le jeu classique du serpent - Mange la nourriture, grandis et évite les collisions !</p>
+            <h1><i class="fas fa-gamepad"></i> SNAKE</h1>
+            <p class="sous-titre">Mange la nourriture, grandis et évite les collisions !</p>
         </header>
         
         <div class="niveau-container">
-            <h2><i class="fas fa-sliders-h"></i> CHOIX DU NIVEAU</h2>
-            <div class="niveaux">
+            <h2><i class="fas fa-sliders-h"></i> NIVEAU</h2>
+            <div class="niveaux-grid">
                 <button class="btn-niveau actif" id="tresFacile">
-                    <i class="fas fa-baby"></i> DÉBUTANT
+                    <i class="fas fa-baby"></i> <span class="btn-text">DÉBUTANT</span>
                 </button>
                 <button class="btn-niveau" id="facile">
-                    <i class="fas fa-smile"></i> FACILE
+                    <i class="fas fa-smile"></i> <span class="btn-text">FACILE</span>
                 </button>
                 <button class="btn-niveau" id="normal">
-                    <i class="fas fa-meh"></i> NORMAL
+                    <i class="fas fa-meh"></i> <span class="btn-text">NORMAL</span>
                 </button>
                 <button class="btn-niveau" id="difficile">
-                    <i class="fas fa-frown"></i> DIFFICILE
+                    <i class="fas fa-frown"></i> <span class="btn-text">DIFFICILE</span>
                 </button>
                 <button class="btn-niveau" id="extreme">
-                    <i class="fas fa-skull"></i> EXTRÊME
+                    <i class="fas fa-skull"></i> <span class="btn-text">EXTRÊME</span>
                 </button>
             </div>
             <div class="vitesse-affichee">
-                <i class="fas fa-tachometer-alt"></i> Niveau : <span id="niveauText">Débutant</span> | 
-                Vitesse : <span id="vitesseText">Très lente</span>
+                <span class="niveau-actuel">Niveau : <span id="niveauText">Débutant</span></span>
+                <span class="vitesse-actuelle">Vitesse : <span id="vitesseText">Très lente</span></span>
             </div>
         </div>
         
@@ -47,26 +47,29 @@
                 <div class="mobile-game-area">
                     <div class="controles-mobile-haut">
                         <button class="btn-mobile" id="btnHaut">
-                            <i class="fas fa-arrow-up"></i> HAUT
+                            <i class="fas fa-arrow-up"></i>
                         </button>
                     </div>
                     <div class="controles-mobile-centre">
                         <button class="btn-mobile" id="btnGauche">
-                            <i class="fas fa-arrow-left"></i> GAUCHE
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                         <button class="btn-mobile" id="btnBas">
-                            <i class="fas fa-arrow-down"></i> BAS
+                            <i class="fas fa-arrow-down"></i>
                         </button>
                         <button class="btn-mobile" id="btnDroite">
-                            <i class="fas fa-arrow-right"></i> DROITE
+                            <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
                     <div class="controles-mobile-bas">
                         <button class="btn-mobile-action" id="btnPauseMobile">
-                            <i class="fas fa-pause"></i> PAUSE
+                            <i class="fas fa-pause"></i>
                         </button>
                         <button class="btn-mobile-action" id="btnRedemarrerMobile">
-                            <i class="fas fa-redo"></i> RESTART
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="btn-mobile-action" id="btnSonMobile">
+                            <i class="fas fa-volume-up"></i>
                         </button>
                     </div>
                 </div>
@@ -81,9 +84,6 @@
                             <button id="btnRejouer">
                                 <i class="fas fa-play"></i> REJOUER
                             </button>
-                            <button id="btnPartager">
-                                <i class="fas fa-share-alt"></i> PARTAGER
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -93,33 +93,68 @@
                 <div class="score-container">
                     <div class="score-titre">SCORE</div>
                     <div class="score-valeur" id="score">0</div>
-                    <div class="meilleur-score">
-                        <i class="fas fa-trophy"></i> Meilleur score : <span id="meilleurScore">0</span>
-                    </div>
-                    <div class="longueur-serpent">
-                        <i class="fas fa-ruler-vertical"></i> Longueur : <span id="longueurSerpent">1</span>
+                    <div class="stats-jeu">
+                        <div class="stat-item">
+                            <i class="fas fa-trophy"></i> 
+                            <span>Meilleur : <span id="meilleurScore">0</span></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-ruler-vertical"></i> 
+                            <span>Longueur : <span id="longueurSerpent">1</span></span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="controles">
-                    <h2><i class="fas fa-gamepad"></i> CONTRÔLES CLAVIER</h2>
-                    <ul>
-                        <li><span class="touche"><i class="fas fa-arrow-up"></i></span> Monter</li>
-                        <li><span class="touche"><i class="fas fa-arrow-down"></i></span> Descendre</li>
-                        <li><span class="touche"><i class="fas fa-arrow-left"></i></span> Gauche</li>
-                        <li><span class="touche"><i class="fas fa-arrow-right"></i></span> Droite</li>
-                        <li><span class="touche">ESPACE</span> Pause/Reprise</li>
-                        <li><span class="touche">R</span> Redémarrer</li>
-                        <li><span class="touche">ESC</span> Quitter le jeu</li>
-                    </ul>
+                <div class="controles-bureau">
+                    <h3><i class="fas fa-keyboard"></i> CONTRÔLES BUREAU</h3>
+                    <div class="touches-clavier">
+                        <div class="touche-item">
+                            <span class="touche"><i class="fas fa-arrow-up"></i></span>
+                            <span>Monter</span>
+                        </div>
+                        <div class="touche-item">
+                            <span class="touche"><i class="fas fa-arrow-down"></i></span>
+                            <span>Descendre</span>
+                        </div>
+                        <div class="touche-item">
+                            <span class="touche"><i class="fas fa-arrow-left"></i></span>
+                            <span>Gauche</span>
+                        </div>
+                        <div class="touche-item">
+                            <span class="touche"><i class="fas fa-arrow-right"></i></span>
+                            <span>Droite</span>
+                        </div>
+                        <div class="touche-item">
+                            <span class="touche">ESPACE</span>
+                            <span>Pause/Reprise</span>
+                        </div>
+                        <div class="touche-item">
+                            <span class="touche">R</span>
+                            <span>Redémarrer</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="instructions">
-                    <h3><i class="fas fa-info-circle"></i> COMMENT JOUER :</h3>
-                    <p>1. Utilisez les touches directionnelles pour déplacer le serpent</p>
-                    <p>2. Mangez la nourriture <span class="nourriture-icone"><i class="fas fa-apple-alt"></i></span> pour grandir et augmenter votre score</p>
-                    <p>3. Évitez les murs et le corps du serpent</p>
-                    <p>4. Plus vous survivez longtemps, plus votre score est élevé !</p>
+                    <h3><i class="fas fa-info-circle"></i> COMMENT JOUER</h3>
+                    <div class="instructions-list">
+                        <div class="instruction-item">
+                            <div class="instruction-icon">1</div>
+                            <p>Déplacez le serpent avec les flèches</p>
+                        </div>
+                        <div class="instruction-item">
+                            <div class="instruction-icon">2</div>
+                            <p>Mangez la nourriture <span class="nourriture-icone"><i class="fas fa-apple-alt"></i></span> pour grandir</p>
+                        </div>
+                        <div class="instruction-item">
+                            <div class="instruction-icon">3</div>
+                            <p>Évitez les murs et votre queue</p>
+                        </div>
+                        <div class="instruction-item">
+                            <div class="instruction-icon">4</div>
+                            <p>Plus vous survivez, plus votre score est élevé !</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="boutons-jeu">
@@ -127,7 +162,7 @@
                         <i class="fas fa-pause"></i> PAUSE
                     </button>
                     <button id="btnRedemarrer">
-                        <i class="fas fa-redo"></i> REDÉMARRER
+                        <i class="fas fa-redo"></i> RESTART
                     </button>
                     <button id="btnSon">
                         <i class="fas fa-volume-up"></i> SON
@@ -137,11 +172,11 @@
         </div>
         
         <footer>
-            <p><i class="fas fa-code"></i> Jeu Snake | Créé avec HTML5, CSS3 & JavaScript | Expérience de jeu classique</p>
-            <p class="copyright">© 2023 Snake Game - Version 2.0</p>
+            <p><i class="fas fa-code"></i> Jeu Snake | HTML5, CSS3 & JavaScript</p>
+            <p class="copyright">© 2023 Snake Game - Version Mobile</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
