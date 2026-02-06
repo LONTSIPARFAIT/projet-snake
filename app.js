@@ -49,8 +49,8 @@ let serpent = [];
 let nourriture = {};
 let score = 0;
 let meilleurScore = localStorage.getItem('meilleurScoreSnake') || 0;
-let direction = "";
-let prochaineDirection = "";
+let direction = "droite"; // Initialisation avec une direction par défaut
+let prochaineDirection = "droite";
 let intervalleJeu;
 let jeuEnPause = false;
 let jeuEnCours = false;
@@ -66,47 +66,16 @@ function dessinerJeuInitial() {
     dessinerGrille();
     
     // Dessiner le serpent initial
-    for (let i = 0; i < serpent.length; i++) {
-        // Corps du serpent avec dégradé
-        let gradient;
-        if (i === 0) {
-            // Tête du serpent
-            gradient = context.createLinearGradient(
-                serpent[i].x, serpent[i].y,
-                serpent[i].x + tailleCase, serpent[i].y + tailleCase
-            );
-            gradient.addColorStop(0, '#4CAF50');
-            gradient.addColorStop(1, '#2E7D32');
-        } else {
-            // Corps du serpent
-            gradient = context.createLinearGradient(
-                serpent[i].x, serpent[i].y,
-                serpent[i].x + tailleCase, serpent[i].y + tailleCase
-            );
-            gradient.addColorStop(0, '#45a049');
-            gradient.addColorStop(1, '#388E3C');
-        }
-        
-        context.fillStyle = gradient;
-        context.fillRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
-        
-        // Contour du serpent
-        context.strokeStyle = i === 0 ? '#1B5E20' : '#2E7D32';
-        context.lineWidth = 2;
-        context.strokeRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
-        
-        // Yeux sur la tête du serpent
-        if (i === 0) {
-            dessinerYeux(serpent[i].x, serpent[i].y, "droite");
-        }
-    }
+    dessinerSerpent();
     
     // Dessiner la nourriture
     dessinerNourriture();
 }
 
-// Initialisation du jeu
+// Initialisation complète du jeu
 function initialiserJeu() {
+    console.log("Initialisation du jeu...");
+    
     // Réinitialiser le serpent
     serpent = [];
     // Position initiale au centre
@@ -149,6 +118,8 @@ function initialiserJeu() {
     if (btnPauseMobile) {
         btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i>';
     }
+    
+    console.log("Jeu initialisé avec succès");
 }
 
 // Générer de la nourriture à une position aléatoire
@@ -272,10 +243,6 @@ function dessinerYeux(x, y, dir) {
     
     // Position des yeux selon la direction
     switch(dir) {
-        case "droite":
-            context.fillRect(x + tailleCase - decalage, y + decalage, tailleOeil, tailleOeil);
-            context.fillRect(x + tailleCase - decalage, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
-            break;
         case "gauche":
             context.fillRect(x + decalage - tailleOeil, y + decalage, tailleOeil, tailleOeil);
             context.fillRect(x + decalage - tailleOeil, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
@@ -283,6 +250,10 @@ function dessinerYeux(x, y, dir) {
         case "haut":
             context.fillRect(x + decalage, y + decalage - tailleOeil, tailleOeil, tailleOeil);
             context.fillRect(x + tailleCase - decalage - tailleOeil, y + decalage - tailleOeil, tailleOeil, tailleOeil);
+            break;
+        case "droite":
+            context.fillRect(x + tailleCase - decalage, y + decalage, tailleOeil, tailleOeil);
+            context.fillRect(x + tailleCase - decalage, y + tailleCase - decalage - tailleOeil, tailleOeil, tailleOeil);
             break;
         case "bas":
             context.fillRect(x + decalage, y + tailleCase - decalage, tailleOeil, tailleOeil);
@@ -376,19 +347,26 @@ function finDuJeu() {
     ecranFin.style.display = "flex";
 }
 
-// Gestion des directions
+// Gestion des directions - CORRIGÉ
 function controlerDirection(nouvelleDirection) {
+    console.log("Tentative de direction:", nouvelleDirection, "Direction actuelle:", direction);
+    
     // Empêcher les mouvements inverses
     if ((nouvelleDirection === "gauche" && direction !== "droite") ||
         (nouvelleDirection === "haut" && direction !== "bas") ||
         (nouvelleDirection === "droite" && direction !== "gauche") ||
         (nouvelleDirection === "bas" && direction !== "haut")) {
         prochaineDirection = nouvelleDirection;
+        console.log("Direction acceptée:", nouvelleDirection);
+    } else {
+        console.log("Direction rejetée (mouvement inverse)");
     }
 }
 
 // Changer le niveau de difficulté
 function changerNiveau(niveau) {
+    console.log("Changement de niveau vers:", niveau);
+    
     // Mettre à jour les boutons
     document.querySelectorAll('.btn-niveau').forEach(btn => {
         btn.classList.remove("actif");
@@ -406,6 +384,7 @@ function changerNiveau(niveau) {
     if (jeuEnCours && !jeuEnPause) {
         clearInterval(intervalleJeu);
         intervalleJeu = setInterval(dessiner, niveaux[niveau].vitesse);
+        console.log("Vitesse mise à jour vers:", niveaux[niveau].vitesse, "ms");
     }
 }
 
@@ -421,6 +400,7 @@ function basculerPause() {
             btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i>';
         }
         jeuEnPause = false;
+        console.log("Jeu repris");
     } else {
         // Mettre en pause le jeu
         clearInterval(intervalleJeu);
@@ -429,6 +409,7 @@ function basculerPause() {
             btnPauseMobile.innerHTML = '<i class="fas fa-play"></i>';
         }
         jeuEnPause = true;
+        console.log("Jeu mis en pause");
     }
 }
 
@@ -448,86 +429,131 @@ function basculerSon() {
     }
 }
 
-// Écouteurs d'événements pour le clavier (seulement sur bureau)
+// Écouteurs d'événements pour le clavier - TOUJOURS ACTIFS
 document.addEventListener("keydown", function(event) {
-    // Ne fonctionne que sur bureau
-    if (window.innerWidth > 768) {
-        if (event.keyCode === 37 || event.key === "ArrowLeft") {
-            controlerDirection("gauche");
-        } else if (event.keyCode === 38 || event.key === "ArrowUp") {
-            controlerDirection("haut");
-        } else if (event.keyCode === 39 || event.key === "ArrowRight") {
-            controlerDirection("droite");
-        } else if (event.keyCode === 40 || event.key === "ArrowDown") {
-            controlerDirection("bas");
-        } else if (event.keyCode === 32 || event.key === " ") {
-            basculerPause();
-            event.preventDefault();
-        } else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
-            initialiserJeu();
-        }
+    console.log("Touche pressée:", event.key, "Code:", event.keyCode);
+    
+    // Touches de direction
+    if (event.keyCode === 37 || event.key === "ArrowLeft") {
+        controlerDirection("gauche");
+    } else if (event.keyCode === 38 || event.key === "ArrowUp") {
+        controlerDirection("haut");
+    } else if (event.keyCode === 39 || event.key === "ArrowRight") {
+        controlerDirection("droite");
+    } else if (event.keyCode === 40 || event.key === "ArrowDown") {
+        controlerDirection("bas");
+    }
+    
+    // Espace pour pause/reprise
+    else if (event.keyCode === 32 || event.key === " ") {
+        basculerPause();
+        event.preventDefault(); // Empêcher le défilement de la page
+    }
+    
+    // R pour redémarrer
+    else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
+        initialiserJeu();
     }
 });
 
-// Contrôles mobiles
-btnHaut.addEventListener("click", () => controlerDirection("haut"));
-btnBas.addEventListener("click", () => controlerDirection("bas"));
-btnGauche.addEventListener("click", () => controlerDirection("gauche"));
-btnDroite.addEventListener("click", () => controlerDirection("droite"));
+// Contrôles mobiles - CORRIGÉ
+btnHaut.addEventListener("click", function() {
+    console.log("Bouton Haut cliqué");
+    controlerDirection("haut");
+});
+
+btnBas.addEventListener("click", function() {
+    console.log("Bouton Bas cliqué");
+    controlerDirection("bas");
+});
+
+btnGauche.addEventListener("click", function() {
+    console.log("Bouton Gauche cliqué");
+    controlerDirection("gauche");
+});
+
+btnDroite.addEventListener("click", function() {
+    console.log("Bouton Droite cliqué");
+    controlerDirection("droite");
+});
 
 if (btnPauseMobile) {
-    btnPauseMobile.addEventListener("click", basculerPause);
+    btnPauseMobile.addEventListener("click", function() {
+        console.log("Bouton Pause Mobile cliqué");
+        basculerPause();
+    });
 }
 
 if (btnRedemarrerMobile) {
-    btnRedemarrerMobile.addEventListener("click", initialiserJeu);
+    btnRedemarrerMobile.addEventListener("click", function() {
+        console.log("Bouton Redémarrer Mobile cliqué");
+        initialiserJeu();
+    });
 }
 
 if (btnSonMobile) {
-    btnSonMobile.addEventListener("click", basculerSon);
+    btnSonMobile.addEventListener("click", function() {
+        console.log("Bouton Son Mobile cliqué");
+        basculerSon();
+    });
 }
 
 // Boutons de niveau
-btnTresFacile.addEventListener("click", () => changerNiveau("tresFacile"));
-btnFacile.addEventListener("click", () => changerNiveau("facile"));
-btnNormal.addEventListener("click", () => changerNiveau("normal"));
-btnDifficile.addEventListener("click", () => changerNiveau("difficile"));
-btnExtreme.addEventListener("click", () => changerNiveau("extreme"));
+btnTresFacile.addEventListener("click", function() {
+    console.log("Niveau Très Facile sélectionné");
+    changerNiveau("tresFacile");
+});
+
+btnFacile.addEventListener("click", function() {
+    console.log("Niveau Facile sélectionné");
+    changerNiveau("facile");
+});
+
+btnNormal.addEventListener("click", function() {
+    console.log("Niveau Normal sélectionné");
+    changerNiveau("normal");
+});
+
+btnDifficile.addEventListener("click", function() {
+    console.log("Niveau Difficile sélectionné");
+    changerNiveau("difficile");
+});
+
+btnExtreme.addEventListener("click", function() {
+    console.log("Niveau Extrême sélectionné");
+    changerNiveau("extreme");
+});
 
 // Écouteurs d'événements pour les boutons
-btnPause.addEventListener("click", basculerPause);
-btnRedemarrer.addEventListener("click", initialiserJeu);
-btnRejouer.addEventListener("click", initialiserJeu);
-btnSon.addEventListener("click", basculerSon);
+btnPause.addEventListener("click", function() {
+    console.log("Bouton Pause cliqué");
+    basculerPause();
+});
+
+btnRedemarrer.addEventListener("click", function() {
+    console.log("Bouton Redémarrer cliqué");
+    initialiserJeu();
+});
+
+btnRejouer.addEventListener("click", function() {
+    console.log("Bouton Rejouer cliqué");
+    initialiserJeu();
+});
+
+btnSon.addEventListener("click", function() {
+    console.log("Bouton Son cliqué");
+    basculerSon();
+});
 
 // Démarrer le jeu au chargement de la page
 window.onload = function() {
+    console.log("Page chargée, initialisation du jeu...");
+    
     // Initialiser le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
     
     // Initialiser le jeu et DESSINER IMMÉDIATEMENT
-    // Réinitialiser le serpent
-    serpent = [];
-    // Position initiale au centre
-    serpent[0] = { 
-        x: Math.floor(tailleGrille/2) * tailleCase, 
-        y: Math.floor(tailleGrille/2) * tailleCase 
-    };
-    
-    // Générer la première nourriture
-    genererNourriture();
-    
-    // Mettre à jour l'affichage du niveau
-    niveauText.textContent = niveaux[niveauActuel].nom;
-    vitesseText.textContent = niveaux[niveauActuel].vitesseTexte;
-    
-    // Dessiner le jeu initial IMMÉDIATEMENT
-    dessinerJeuInitial();
-    
-    // Démarrer le jeu
-    intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
-    jeuEnCours = true;
-    jeuEnPause = false;
+    initialiserJeu();
     
     // Afficher/masquer les contrôles mobiles selon la taille d'écran
     function ajusterControlesMobile() {
@@ -536,21 +562,33 @@ window.onload = function() {
         
         if (window.innerWidth <= 768) {
             // Mode mobile
-            if (controlesMobile) controlesMobile.style.display = 'block';
-            if (controlesBureau) controlesBureau.style.display = 'none';
+            if (controlesMobile) {
+                controlesMobile.style.display = 'block';
+                console.log("Contrôles mobiles affichés");
+            }
+            if (controlesBureau) {
+                controlesBureau.style.display = 'none';
+                console.log("Contrôles bureau cachés");
+            }
         } else {
             // Mode bureau
-            if (controlesMobile) controlesMobile.style.display = 'none';
-            if (controlesBureau) controlesBureau.style.display = 'block';
+            if (controlesMobile) {
+                controlesMobile.style.display = 'none';
+                console.log("Contrôles mobiles cachés");
+            }
+            if (controlesBureau) {
+                controlesBureau.style.display = 'block';
+                console.log("Contrôles bureau affichés");
+            }
         }
     }
     
     ajusterControlesMobile();
     window.addEventListener('resize', ajusterControlesMobile);
     
-    // Empêcher le défilement avec les touches fléchées
+    // Empêcher le défilement avec les touches fléchées (uniquement pour mobile)
     document.addEventListener('keydown', function(e) {
-        if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',' '].indexOf(e.code) > -1) {
+        if(window.innerWidth <= 768 && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space',' '].indexOf(e.code) > -1) {
             e.preventDefault();
         }
     }, false);
@@ -565,18 +603,7 @@ window.onload = function() {
         lastTouchEnd = now;
     }, false);
     
-    // Désactiver le menu contextuel sur les boutons mobiles
-    document.querySelectorAll('.btn-mobile, .btn-mobile-action').forEach(button => {
-        button.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        
-        // Empêcher le comportement par défaut du touch
-        button.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-        }, {passive: false});
-    });
+    console.log("Jeu prêt à fonctionner!");
 };
 
 // Redimensionnement responsive du canvas
@@ -589,3 +616,6 @@ window.addEventListener('resize', function() {
         canvas.style.height = 'auto';
     }
 });
+
+// Ajouter un console.log de test
+console.log("Script JavaScript chargé avec succès");
