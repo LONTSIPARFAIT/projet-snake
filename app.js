@@ -37,11 +37,11 @@ const tailleGrille = tailleCanvas / tailleCase;
 
 // Niveaux de difficulté - VITESSES RÉDUITES pour être moins rapides
 const niveaux = {
-    tresFacile: { vitesse: 180, nom: "Débutant", vitesseTexte: "Très lente" },
-    facile: { vitesse: 120, nom: "Facile", vitesseTexte: "Lente" },
-    normal: { vitesse: 90, nom: "Normal", vitesseTexte: "Normale" },
-    difficile: { vitesse: 60, nom: "Difficile", vitesseTexte: "Rapide" },
-    extreme: { vitesse: 35, nom: "Extrême", vitesseTexte: "Très rapide" }
+    tresFacile: { vitesse: 200, nom: "Débutant", vitesseTexte: "Très lente" },
+    facile: { vitesse: 190, nom: "Facile", vitesseTexte: "Lente" },
+    normal: { vitesse: 180, nom: "Normal", vitesseTexte: "Normale" },
+    difficile: { vitesse: 150, nom: "Difficile", vitesseTexte: "Rapide" },
+    extreme: { vitesse: 100, nom: "Extrême", vitesseTexte: "Très rapide" }
 };
 
 // Variables du jeu
