@@ -49,11 +49,12 @@ let serpent = [];
 let nourriture = {};
 let score = 0;
 let meilleurScore = localStorage.getItem('meilleurScoreSnake') || 0;
-let direction = "droite"; // Initialisation avec une direction par défaut
-let prochaineDirection = "droite";
+let direction = ""; // Vide au début - le serpent ne bouge pas
+let prochaineDirection = "";
 let intervalleJeu;
 let jeuEnPause = false;
 let jeuEnCours = false;
+let jeuDemarre = false; // Nouvelle variable pour savoir si le jeu a commencé
 let niveauActuel = "tresFacile";
 let sonActif = false; // Désactivé par défaut pour mobile
 
@@ -91,8 +92,9 @@ function initialiserJeu() {
     score = 0;
     scoreElement.textContent = score;
     longueurSerpentElement.textContent = serpent.length;
-    direction = "droite"; // Direction initiale
-    prochaineDirection = "droite";
+    direction = ""; // Vide - le serpent ne bouge pas
+    prochaineDirection = "";
+    jeuDemarre = false; // Le jeu n'a pas encore commencé
     
     // Mettre à jour le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
@@ -107,9 +109,12 @@ function initialiserJeu() {
     // Dessiner l'état initial
     dessinerJeuInitial();
     
-    // Démarrer le jeu avec la vitesse du niveau actuel
-    if (intervalleJeu) clearInterval(intervalleJeu);
-    intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
+    // Arrêter le jeu s'il était en cours
+    if (intervalleJeu) {
+        clearInterval(intervalleJeu);
+        intervalleJeu = null;
+    }
+    
     jeuEnCours = true;
     jeuEnPause = false;
     
@@ -119,7 +124,19 @@ function initialiserJeu() {
         btnPauseMobile.innerHTML = '<i class="fas fa-pause"></i>';
     }
     
-    console.log("Jeu initialisé avec succès");
+    console.log("Jeu initialisé. Appuyez sur une direction pour commencer.");
+}
+
+// Démarrer le jeu (commencer le mouvement)
+function demarrerJeu() {
+    if (!jeuDemarre && jeuEnCours && !jeuEnPause) {
+        jeuDemarre = true;
+        console.log("Jeu démarré! Le serpent commence à bouger.");
+        
+        // Démarrer le jeu avec la vitesse du niveau actuel
+        if (intervalleJeu) clearInterval(intervalleJeu);
+        intervalleJeu = setInterval(dessiner, niveaux[niveauActuel].vitesse);
+    }
 }
 
 // Générer de la nourriture à une position aléatoire
@@ -145,6 +162,11 @@ function genererNourriture() {
 
 // Fonction de dessin principale
 function dessiner() {
+    // Si le jeu n'a pas encore démarré, ne rien faire
+    if (!jeuDemarre) {
+        return;
+    }
+    
     // Effacer le canvas
     context.clearRect(0, 0, tailleCanvas, tailleCanvas);
     
@@ -154,6 +176,13 @@ function dessiner() {
     // Mettre à jour la direction
     if (prochaineDirection !== "") {
         direction = prochaineDirection;
+    }
+    
+    // Si aucune direction n'est définie, ne rien faire
+    if (direction === "") {
+        dessinerSerpent();
+        dessinerNourriture();
+        return;
     }
     
     // Calculer la nouvelle position de la tête
@@ -228,9 +257,9 @@ function dessinerSerpent() {
         context.lineWidth = 2;
         context.strokeRect(serpent[i].x, serpent[i].y, tailleCase, tailleCase);
         
-        // Yeux sur la tête du serpent
+        // Yeux sur la tête du serpent (direction par défaut "droite" si pas de direction)
         if (i === 0) {
-            dessinerYeux(serpent[i].x, serpent[i].y, direction);
+            dessinerYeux(serpent[i].x, serpent[i].y, direction || "droite");
         }
     }
 }
@@ -316,7 +345,9 @@ function collision(tete, tableau) {
 // Fin du jeu
 function finDuJeu() {
     clearInterval(intervalleJeu);
+    intervalleJeu = null;
     jeuEnCours = false;
+    jeuDemarre = false;
     
     // Mettre à jour le meilleur score si nécessaire
     if (score > meilleurScore) {
@@ -351,6 +382,11 @@ function finDuJeu() {
 function controlerDirection(nouvelleDirection) {
     console.log("Tentative de direction:", nouvelleDirection, "Direction actuelle:", direction);
     
+    // Démarrer le jeu si c'est la première direction
+    if (!jeuDemarre) {
+        demarrerJeu();
+    }
+    
     // Empêcher les mouvements inverses
     if ((nouvelleDirection === "gauche" && direction !== "droite") ||
         (nouvelleDirection === "haut" && direction !== "bas") ||
@@ -381,7 +417,7 @@ function changerNiveau(niveau) {
     vitesseText.textContent = niveaux[niveau].vitesseTexte;
     
     // Redémarrer le jeu avec la nouvelle vitesse si le jeu est en cours
-    if (jeuEnCours && !jeuEnPause) {
+    if (jeuEnCours && !jeuEnPause && jeuDemarre) {
         clearInterval(intervalleJeu);
         intervalleJeu = setInterval(dessiner, niveaux[niveau].vitesse);
         console.log("Vitesse mise à jour vers:", niveaux[niveau].vitesse, "ms");
@@ -390,7 +426,7 @@ function changerNiveau(niveau) {
 
 // Fonction pour mettre en pause/reprendre le jeu
 function basculerPause() {
-    if (!jeuEnCours) return;
+    if (!jeuEnCours || !jeuDemarre) return;
     
     if (jeuEnPause) {
         // Reprendre le jeu
@@ -429,34 +465,39 @@ function basculerSon() {
     }
 }
 
-// Écouteurs d'événements pour le clavier - TOUJOURS ACTIFS
+// Écouteurs d'événements pour le clavier
 document.addEventListener("keydown", function(event) {
     console.log("Touche pressée:", event.key, "Code:", event.keyCode);
     
     // Touches de direction
     if (event.keyCode === 37 || event.key === "ArrowLeft") {
         controlerDirection("gauche");
+        event.preventDefault();
     } else if (event.keyCode === 38 || event.key === "ArrowUp") {
         controlerDirection("haut");
+        event.preventDefault();
     } else if (event.keyCode === 39 || event.key === "ArrowRight") {
         controlerDirection("droite");
+        event.preventDefault();
     } else if (event.keyCode === 40 || event.key === "ArrowDown") {
         controlerDirection("bas");
+        event.preventDefault();
     }
     
     // Espace pour pause/reprise
     else if (event.keyCode === 32 || event.key === " ") {
         basculerPause();
-        event.preventDefault(); // Empêcher le défilement de la page
+        event.preventDefault();
     }
     
     // R pour redémarrer
     else if (event.keyCode === 82 || event.key === "r" || event.key === "R") {
         initialiserJeu();
+        event.preventDefault();
     }
 });
 
-// Contrôles mobiles - CORRIGÉ
+// Contrôles mobiles
 btnHaut.addEventListener("click", function() {
     console.log("Bouton Haut cliqué");
     controlerDirection("haut");
@@ -552,7 +593,7 @@ window.onload = function() {
     // Initialiser le meilleur score
     meilleurScoreElement.textContent = meilleurScore;
     
-    // Initialiser le jeu et DESSINER IMMÉDIATEMENT
+    // Initialiser le jeu mais NE PAS DÉMARRER LE MOUVEMENT
     initialiserJeu();
     
     // Afficher/masquer les contrôles mobiles selon la taille d'écran
@@ -603,7 +644,7 @@ window.onload = function() {
         lastTouchEnd = now;
     }, false);
     
-    console.log("Jeu prêt à fonctionner!");
+    console.log("Jeu prêt! Appuyez sur une direction pour commencer.");
 };
 
 // Redimensionnement responsive du canvas
